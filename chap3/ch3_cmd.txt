@@ -1,0 +1,19 @@
+// 컴파일러(solc) 설치
+sudo add-apt-repository ppa:ethereum/ethereum
+sudo apt-get update
+sudo apt-get install solc
+solc --version
+which solc
+
+// Geth 실행 (디렉토리는 적절하게 변경한다)
+nohup geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --unlock 0,1 --password /home/eth/data_testnet/passwd --verbosity 6 2>> /home/eth/data_testnet/geth.log &
+
+// Geth 콘솔에 접속
+geth attach rpc:http://localhost:8545
+
+// Geth에 solc 경로 지정
+admin.setSolc("/usr/bin/solc")
+
+// 확인
+eth.getCompilers()
+

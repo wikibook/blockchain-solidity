@@ -1,0 +1,190 @@
+// 명령줄에서 필수 라이브러리, 프로그램 등을 설치
+sudo apt-get install -y build-essential libgmp3-dev golang git tree
+
+// Geth 설치(1.5.5)
+cd
+git clone https://github.com/ethereum/go-ethereum.git
+cd go-ethereum/
+git checkout refs/tags/v1.5.5
+make geth
+./build/bin/geth version
+sudo cp build/bin/geth /usr/local/bin/
+which geth
+
+// 데이터 디렉토리 준비
+mkdir ~/data_testnet
+
+// Genesis 파일
+cd data_testnet/
+vi genesis.json
+{
+	"nonce": "0x0000000000000042",
+	"timestamp": "0x0",
+	"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	"extraData": "0x0",
+	"gasLimit": "0x8000000",
+	"difficulty": "0x4000",
+	"mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	"coinbase": "0x3333333333333333333333333333333333333333",
+	"alloc": {}
+}
+
+// 초기화 (디렉토리는 적절하게 변경해야 한다. 여기서는 eth라는 사용자의 홈 디렉토리에서 작업을 수행한다)
+geth --datadir /home/eth/data_testnet init /home/eth/data_testnet/genesis.json
+cd
+tree data_testnet/
+
+// Geth 실행
+geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet console 2>> /home/eth/data_testnet/geth.log
+
+
+// 계정 생성
+personal.newAccount("pass0")
+personal.newAccount("pass1")
+
+// 계정 확인
+eth.accounts
+eth.accounts[0]
+eth.accounts[1]
+
+// Geth 콘솔 종료
+exit
+
+// geth 명령으로 계정 생성
+geth --datadir /home/eth/data_testnet account new
+
+// geth 명령으로 계정 확인
+geth --datadir /home/eth/data_testnet account list
+
+
+// Geth 실행
+geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet console 2>> /home/eth/data_testnet/geth.log
+
+// 계정 확인
+eth.accounts
+
+// Etherbase 확인
+eth.coinbase
+
+// Etherbase 변경
+miner.setEtherbase(eth.accounts[1])
+
+// Etherbase 확인 및 반환
+eth.coinbase
+miner.setEtherbase(eth.accounts[0])
+eth.coinbase
+
+// 계정 잔고 확인
+eth.getBalance(eth.accounts[0])
+eth.getBalance(eth.accounts[1])
+eth.getBalance(eth.accounts[2])
+
+// 블록 번호 확인
+eth.blockNumber
+
+// 채굴 개시
+miner.start(1)
+
+// 채굴 확인 관련 명령어
+eth.mining
+eth.hashrate
+eth.blockNumber
+
+// 채굴 정지
+miner.stop()
+
+// Etherbase 잔고 확인
+eth.getBalance(eth.coinbase)
+
+// 계정 잔고 확인
+eth.getBalance(eth.accounts[0])
+eth.getBalance(eth.accounts[1])
+eth.getBalance(eth.accounts[2])
+
+web3.fromWei(eth.getBalance(eth.accounts[0]), "ether")
+web3.fromWei(eth.getBalance(eth.accounts[1]), "ether")
+web3.fromWei(eth.getBalance(eth.accounts[2]), "ether")
+
+// 송금
+eth.sendTransaction({from: eth.accounts[0], to: eth.accounts[1], value: web3.toWei(10, "ether")})
+
+// 잠금 해제
+personal.unlockAccount(eth.accounts[0])
+personal.unlockAccount(eth.accounts[0], "pass0")
+personal.unlockAccount(eth.accounts[0], "pass0", 0)
+
+// 처리 대기 중인 트랜잭션 확인
+eth.pendingTransactions
+
+// 잔고 확인
+web3.fromWei(eth.getBalance(eth.accounts[1]), "ether")
+
+// 송금
+eth.sendTransaction({from: eth.accounts[1], to: eth.accounts[2], value: web3.toWei(5, "ether")})
+
+// 잔고 확인
+web3.fromWei(eth.getBalance(eth.accounts[2]), "ether")
+web3.fromWei(eth.getBalance(eth.accounts[1]), "ether")
+web3.fromWei(eth.getBalance(eth.accounts[0]), "ether")
+
+
+// 백그라운드로 Geth 실행
+nohup geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc 2>> /home/eth/data_testnet/geth.log &
+
+// Geth 콘솔에 접속
+geth attach rpc:http://localhost:8545
+
+// 채굴 확인
+eth.mining
+
+// 콘솔 종료
+exit
+
+// 백그라운드로 Geth 실행（JSON-RPC）
+nohup geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" 2>> /home/eth/data_testnet/geth.log &
+
+// curl로 계정 생성
+curl -X POST --data '{"jsonrpc":"2.0","method":"personal_newAccount","params":["pass3"],"id":10}' localhost:8545
+
+// curl로 계정 확인
+curl -X POST --data '{"jsonrpc":"2.0","method":"personal_listAccounts","params":[],"id":10}' localhost:8545
+
+// curl로 채굴 확인
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_mining","params":[],"id":10}' localhost:8545
+
+// curl로 해시 속도 확인
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_hashrate","params":[],"id":10}' localhost:8545
+
+// curl로 블록 번호 확인
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":10}' localhost:8545
+
+// curl로 잔고 확인 (계정은 적절하게 변경한다)
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xd4b066d813731a946fb883037f318c2d9444fcfe" , "latest"],"id":10}' localhost:8545
+
+// curl로 잠금 해제 (계정은 적절하게 변경한다)
+curl -X POST --data '{"jsonrpc":"2.0","method":"personal_unlockAccount","params":["0xd4b066d813731a946fb883037f318c2d9444fcfe", "pass2", 300],"id":10}' localhost:8545
+
+// curl로 송금 (계정은 적절하게 변경한다)
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xd4b066d813731a946fb883037f318c2d9444fcfe","value":"0x6F05B59D3B20000","to":"0x3293ba9409e0881d23b494c8922318793971aac2"}],"id":10}' localhost:8545
+
+
+// Geth 실행시 계정 잠금 해제
+geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --unlock 0 --verbosity 6 console 2>> /home/eth/data_testnet/geth.log
+
+
+// 패스워드 파일 준비
+echo pass0 >> /home/eth/data_testnet/passwd
+echo pass1 >> /home/eth/data_testnet/passwd
+cat /home/eth/data_testnet/passwd
+pass0
+pass1
+
+// Geth 실행시 계정 잠금 해제 (패스워드 파일 사용)
+geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --unlock 0,1 --password /home/eth/data_testnet/passwd --verbosity 6 console 2>> /home/eth/data_testnet/geth.log
+
+// 백그라운드로 Geth를 실행할 때 계정 잠금 해제 (패스워드 파일 사용)
+nohup geth --networkid 4649 --nodiscover --maxpeers 0 --datadir /home/eth/data_testnet --mine --minerthreads 1 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --unlock 0,1 --password /home/eth/data_testnet/passwd --verbosity 6 2>> /home/eth/data_testnet/geth.log &
+
+// Geth 콘솔에 접속
+geth attach rpc:http://localhost:8545
+
