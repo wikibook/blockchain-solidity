@@ -1,0 +1,55 @@
+계약 관리자 - eth.account[1]
+  "0xf73dfb27c3236cddef7e59162826b77b3815194a"
+인증 기관(대학) - eth.account[2]
+  "0xdad1e62247ddba270ceede3de858366d0dc5430d"
+인증 기관(기업) - eth.account[3]
+  "0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f"
+열람자(채용 담당자) - eth.account[4]
+  "0x446369222c208e74cd5ab7f76d205f12cb782414"
+정보 공개자(조현수) - eth.account[5]
+  "0xbc9d277020e91f46ff919175a6b077bca5d5636c"
+
+시나리오 1. 계약 등록
+  > eth.coinbase
+  "0xf73dfb27c3236cddef7e59162826b77b3815194a" (계약 관리자)
+  contractObj 변수 선언
+
+시나리오 2. 인증 조직 정보 등록
+  - 인증 기관(대학) 등록
+    > eth.coinbase
+    "0xdad1e62247ddba270ceede3de858366d0dc5430d" (인증 기관(대학))
+    > contractObj.SetOrganization.sendTransaction("가천대학교", eth.account[2])
+    > contractObj.orgDetail.call("0xdad1e62247ddba270ceede3de858366d0dc5430d", {from:eth.accounts[2]})
+    "연세대학교"
+    > contractObj.setBelong.sendTransaction("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[2]})
+  - 인증 기관(기업) 등록
+    > eth.coinbase
+    "0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f" (인증 기관(기업))
+    > contractObj.SetOrganization.sendTransaction("현대카드", eth.account[3])
+    > contractObj.orgDetail.call("0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f", {from:eth.accounts[2]})
+    "현대카드"
+    > contractObj.setBelong.sendTransaction("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[2]})
+
+시나리오 3. 본인 정보 등록
+  - 본인 정보
+    > eth.coinbase
+    "0xbc9d277020e91f46ff919175a6b077bca5d5636c" (정보 공개자(조현수))
+    > contractObj.setPerson.sendTransaction("조현수", "19861002", {from:eth.accounts[5]})
+    > contractObj.getPerson.call("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[5]})
+    [false, 0, 0, "0x000000000000000000", "조현수", "19861002", ["0xdad1e62247ddba270ceede3de858366d0dc5430d", "0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f"]]
+  - 열람자(채용담당자)에게 권한 설정
+    > contractObj.setApprove.sendTransaction("0x446369222c208e74cd5ab7f76d205f12cb782414", 20, {from:eth.accounts[5]})
+    > contractObj.getPerson.call("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[5]})
+    [true, 1050, 1070, "0x446369222c208e74cd5ab7f76d205f12cb782414", "조현수", "19861002", ["0xdad1e62247ddba270ceede3de858366d0dc5430d", "0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f"]]
+
+  시나리오 4. 본인 확인 정보 열람
+    > eth.coinbase
+    "0x446369222c208e74cd5ab7f76d205f12cb782414" (열람자(채용 담당자))
+    > eth.blockNumber
+    1060
+    > contractObj.getPerson.call("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[4]})
+    [true, 1050, 1070, "0x446369222c208e74cd5ab7f76d205f12cb782414", "조현수", "19861002", ["0xdad1e62247ddba270ceede3de858366d0dc5430d", "0x50b9b8b7e6362b734cb6cda675b4cfc202633c0f"]]
+    > eth.blockNumber
+    1080
+    > contractObj.getPerson.call("0xbc9d277020e91f46ff919175a6b077bca5d5636c", {from:eth.accounts[4]})
+    [true, 1050, 1070, "0x446369222c208e74cd5ab7f76d205f12cb782414", "", "", []]
